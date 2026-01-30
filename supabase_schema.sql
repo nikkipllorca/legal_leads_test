@@ -18,3 +18,6 @@ alter table leads enable row level security;
 
 -- Allow anyone to insert (since it's a lead form)
 create policy "Allow public insert" on leads for insert with check (true);
+
+-- Allow authenticated users to view leads
+create policy "Allow authenticated select" on leads for select using (auth.role() = 'authenticated');
