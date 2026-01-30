@@ -38,7 +38,11 @@ export default function AdminDashboard() {
                     .eq('id', session.user.id)
                     .single();
 
-                if (profileError) console.error('Profile fetch error:', profileError);
+                if (profileError) {
+                    console.error('Profile fetch error details:', JSON.stringify(profileError, null, 2));
+                    console.error('Raw error object:', profileError);
+                }
+                console.log('Fetched profile data:', profile);
                 console.log('Fetched profile role:', profile?.role);
 
                 setRole(profile?.role || 'editor');
