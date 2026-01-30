@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import UserManagement from '@/components/UserManagement';
 
 interface Lead {
     id: string;
@@ -19,6 +20,8 @@ interface Lead {
 export default function AdminDashboard() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
+    const [role, setRole] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'leads' | 'users'>('leads');
     const router = useRouter();
 
     useEffect(() => {
@@ -27,6 +30,14 @@ export default function AdminDashboard() {
             if (!session) {
                 router.push('/admin/login');
             } else {
+                // Fetch profile to check role
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .single();
+
+                setRole(profile?.role || 'editor');
                 fetchLeads();
             }
         };
@@ -55,7 +66,7 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <div className="main-wrapper" style={{ justifyContent: 'center' }}>
-                <p>Loading leads...</p>
+                <p>Loading...</p>
             </div>
         );
     }
@@ -63,55 +74,94 @@ export default function AdminDashboard() {
     return (
         <main className="main-wrapper" style={{ flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1>Lead <span>Dashboard</span></h1>
-                <button onClick={handleLogout} style={{ width: 'auto', padding: '10px 20px', background: 'rgba(255,255,255,0.1)', color: 'white' }}>
-                    Logout
-                </button>
+                <h1>Admin <span>Portal</span></h1>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={handleLogout} style={{ width: 'auto', padding: '10px 20px', background: 'rgba(255,255,255,0.1)', color: 'white' }}>
+                        Logout
+                    </button>
+                </div>
             </div>
 
-            <div className="form-card" style={{ padding: '20px', overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
-                            <th style={{ padding: '12px' }}>Date</th>
-                            <th style={{ padding: '12px' }}>Name</th>
-                            <th style={{ padding: '12px' }}>Contact</th>
-                            <th style={{ padding: '12px' }}>Location</th>
-                            <th style={{ padding: '12px' }}>18-Wheeler</th>
-                            <th style={{ padding: '12px' }}>Estimate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {leads.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} style={{ padding: '20px', textAlign: 'center', opacity: 0.5 }}>No leads found yet.</td>
-                            </tr>
-                        ) : (
-                            leads.map((lead) => (
-                                <tr key={lead.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>
-                                        {new Date(lead.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td style={{ padding: '12px' }}>
-                                        {lead.first_name} {lead.last_name}
-                                    </td>
-                                    <td style={{ padding: '12px', fontSize: '0.85rem' }}>
-                                        {lead.email}<br />
-                                        <span style={{ color: 'var(--gold)' }}>{lead.phone}</span>
-                                    </td>
-                                    <td style={{ padding: '12px' }}>{lead.city}</td>
-                                    <td style={{ padding: '12px' }}>
-                                        {lead.is_commercial ? '✅ Yes' : '❌ No'}
-                                    </td>
-                                    <td style={{ padding: '12px', fontWeight: 'bold', color: 'var(--gold)' }}>
-                                        {lead.estimate_range}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '10px' }}>
+                <button
+                    onClick={() => setActiveTab('leads')}
+                    style={{
+                        background: 'none',
+                        color: activeTab === 'leads' ? 'var(--gold)' : 'white',
+                        borderBottom: activeTab === 'leads' ? '2px solid var(--gold)' : 'none',
+                        padding: '10px',
+                        borderRadius: '0',
+                        width: 'auto',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Leads
+                </button>
+                {role === 'admin' && (
+                    <button
+                        onClick={() => setActiveTab('users')}
+                        style={{
+                            background: 'none',
+                            color: activeTab === 'users' ? 'var(--gold)' : 'white',
+                            borderBottom: activeTab === 'users' ? '2px solid var(--gold)' : 'none',
+                            padding: '10px',
+                            borderRadius: '0',
+                            width: 'auto',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        User Management
+                    </button>
+                )}
             </div>
+
+            {activeTab === 'leads' ? (
+                <div className="form-card" style={{ padding: '20px', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                <th style={{ padding: '12px' }}>Date</th>
+                                <th style={{ padding: '12px' }}>Name</th>
+                                <th style={{ padding: '12px' }}>Contact</th>
+                                <th style={{ padding: '12px' }}>Location</th>
+                                <th style={{ padding: '12px' }}>18-Wheeler</th>
+                                <th style={{ padding: '12px' }}>Estimate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {leads.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} style={{ padding: '20px', textAlign: 'center', opacity: 0.5 }}>No leads found yet.</td>
+                                </tr>
+                            ) : (
+                                leads.map((lead) => (
+                                    <tr key={lead.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <td style={{ padding: '12px', fontSize: '0.85rem' }}>
+                                            {new Date(lead.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td style={{ padding: '12px' }}>
+                                            {lead.first_name} {lead.last_name}
+                                        </td>
+                                        <td style={{ padding: '12px', fontSize: '0.85rem' }}>
+                                            {lead.email}<br />
+                                            <span style={{ color: 'var(--gold)' }}>{lead.phone}</span>
+                                        </td>
+                                        <td style={{ padding: '12px' }}>{lead.city}</td>
+                                        <td style={{ padding: '12px' }}>
+                                            {lead.is_commercial ? '✅ Yes' : '❌ No'}
+                                        </td>
+                                        <td style={{ padding: '12px', fontWeight: 'bold', color: 'var(--gold)' }}>
+                                            {lead.estimate_range}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <UserManagement />
+            )}
         </main>
     );
 }
