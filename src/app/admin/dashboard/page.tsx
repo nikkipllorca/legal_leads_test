@@ -27,15 +27,19 @@ export default function AdminDashboard() {
     useEffect(() => {
         const checkUser = async () => {
             const { data: { session } } = await supabase.auth.getSession();
+            console.log('Session user:', session?.user?.email);
             if (!session) {
                 router.push('/admin/login');
             } else {
                 // Fetch profile to check role
-                const { data: profile } = await supabase
+                const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('role')
                     .eq('id', session.user.id)
                     .single();
+
+                if (profileError) console.error('Profile fetch error:', profileError);
+                console.log('Fetched profile role:', profile?.role);
 
                 setRole(profile?.role || 'editor');
                 fetchLeads();
