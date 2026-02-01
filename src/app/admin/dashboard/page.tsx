@@ -19,6 +19,60 @@ interface Lead {
     media_urls?: string[];
 }
 
+function MediaAttachment({ path, idx }: { path: string; idx: number }) {
+    const [signedUrl, setSignedUrl] = useState<string | null>(null);
+    const isImage = path.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+
+    useEffect(() => {
+        const getUrl = async () => {
+            const { data, error } = await supabase.storage
+                .from('media_files')
+                .createSignedUrl(path, 3600); // URL valid for 1 hour
+
+            if (!error && data) {
+                setSignedUrl(data.signedUrl);
+            }
+        };
+        getUrl();
+    }, [path]);
+
+    if (!signedUrl) return <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>...</span>;
+
+    return (
+        <a
+            href={signedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: 'none' }}
+            title="Click to view full size (Secure Link)"
+        >
+            {isImage ? (
+                <img
+                    src={signedUrl}
+                    alt="Lead attachment"
+                    style={{
+                        width: '32px',
+                        height: '32px',
+                        objectFit: 'cover',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(212, 175, 55, 0.3)'
+                    }}
+                />
+            ) : (
+                <span style={{
+                    fontSize: '0.6rem',
+                    background: 'rgba(212, 175, 55, 0.2)',
+                    color: 'var(--gold)',
+                    padding: '2px 6px',
+                    borderRadius: '4px'
+                }}>
+                    File {idx + 1}
+                </span>
+            )}
+        </a>
+    );
+}
+
 export default function AdminDashboard() {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
@@ -267,44 +321,9 @@ export default function AdminDashboard() {
                                             <td style={{ padding: '12px' }}>
                                                 {lead.media_urls && lead.media_urls.length > 0 ? (
                                                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                        {lead.media_urls.map((url, idx) => {
-                                                            const { data } = supabase.storage.from('media_files').getPublicUrl(url);
-                                                            const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                                                            return (
-                                                                <a
-                                                                    key={idx}
-                                                                    href={data.publicUrl}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    style={{ textDecoration: 'none' }}
-                                                                    title="Click to view full size"
-                                                                >
-                                                                    {isImage ? (
-                                                                        <img
-                                                                            src={data.publicUrl}
-                                                                            alt="Lead attachment"
-                                                                            style={{
-                                                                                width: '32px',
-                                                                                height: '32px',
-                                                                                objectFit: 'cover',
-                                                                                borderRadius: '4px',
-                                                                                border: '1px solid rgba(212, 175, 55, 0.3)'
-                                                                            }}
-                                                                        />
-                                                                    ) : (
-                                                                        <span style={{
-                                                                            fontSize: '0.6rem',
-                                                                            background: 'rgba(212, 175, 55, 0.2)',
-                                                                            color: 'var(--gold)',
-                                                                            padding: '2px 6px',
-                                                                            borderRadius: '4px'
-                                                                        }}>
-                                                                            File {idx + 1}
-                                                                        </span>
-                                                                    )}
-                                                                </a>
-                                                            );
-                                                        })}
+                                                        {lead.media_urls.map((url, idx) => (
+                                                            <MediaAttachment key={idx} path={url} idx={idx} />
+                                                        ))}
                                                     </div>
                                                 ) : (
                                                     <span style={{ fontSize: '0.7rem', opacity: 0.3 }}>None</span>
