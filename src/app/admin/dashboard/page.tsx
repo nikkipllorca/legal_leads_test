@@ -20,42 +20,52 @@ interface Lead {
 }
 
 function MediaAttachment({ path, idx }: { path: string; idx: number }) {
-    const [signedUrl, setSignedUrl] = useState<string | null>(null);
+    const [localUrl, setLocalUrl] = useState<string | null>(null);
     const isImage = path.match(/\.(jpg|jpeg|png|gif|webp)$/i);
 
     useEffect(() => {
-        const getUrl = async () => {
+        const getFile = async () => {
+            // Download the file directly as a blob using the admin's session
             const { data, error } = await supabase.storage
                 .from('media_files')
-                .createSignedUrl(path, 3600); // URL valid for 1 hour
+                .download(path);
 
             if (!error && data) {
-                setSignedUrl(data.signedUrl);
+                const url = URL.createObjectURL(data);
+                setLocalUrl(url);
+            } else {
+                console.error('Error downloading file:', error?.message);
             }
         };
-        getUrl();
+        getFile();
+
+        // Cleanup: Revoke the local URL when component unmounts to save memory
+        return () => {
+            if (localUrl) URL.revokeObjectURL(localUrl);
+        };
     }, [path]);
 
-    if (!signedUrl) return <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>...</span>;
+    if (!localUrl) return <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>...</span>;
 
     return (
         <a
-            href={signedUrl}
+            href={localUrl}
             target="_blank"
             rel="noopener noreferrer"
             style={{ textDecoration: 'none' }}
-            title="Click to view full size (Secure Link)"
+            title="Secure Local Preview (Cannot be shared)"
         >
             {isImage ? (
                 <img
-                    src={signedUrl}
+                    src={localUrl}
                     alt="Lead attachment"
                     style={{
                         width: '32px',
                         height: '32px',
                         objectFit: 'cover',
                         borderRadius: '4px',
-                        border: '1px solid rgba(212, 175, 55, 0.3)'
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        cursor: 'pointer'
                     }}
                 />
             ) : (
