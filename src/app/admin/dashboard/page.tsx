@@ -139,29 +139,50 @@ export default function AdminDashboard() {
 
             {activeTab === 'leads' ? (
                 <>
-                    <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px' }}>
-                        <button
-                            onClick={() => setShowArchived(false)}
-                            style={{
-                                width: 'auto',
-                                padding: '8px 16px',
-                                background: !showArchived ? 'var(--gold)' : 'rgba(255,255,255,0.1)',
-                                color: !showArchived ? 'black' : 'white'
-                            }}
-                        >
-                            Active Leads
-                        </button>
-                        <button
-                            onClick={() => setShowArchived(true)}
-                            style={{
-                                width: 'auto',
-                                padding: '8px 16px',
-                                background: showArchived ? 'var(--gold)' : 'rgba(255,255,255,0.1)',
-                                color: showArchived ? 'black' : 'white'
-                            }}
-                        >
-                            Archived
-                        </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                onClick={() => setShowArchived(false)}
+                                style={{
+                                    width: 'auto',
+                                    padding: '8px 16px',
+                                    background: !showArchived ? 'var(--gold)' : 'rgba(255,255,255,0.1)',
+                                    color: !showArchived ? 'black' : 'white'
+                                }}
+                            >
+                                Active Leads
+                            </button>
+                            <button
+                                onClick={() => setShowArchived(true)}
+                                style={{
+                                    width: 'auto',
+                                    padding: '8px 16px',
+                                    background: showArchived ? 'var(--gold)' : 'rgba(255,255,255,0.1)',
+                                    color: showArchived ? 'black' : 'white'
+                                }}
+                            >
+                                Archived
+                            </button>
+                        </div>
+                        {showArchived && role === 'admin' && filteredLeads.length > 0 && (
+                            <button
+                                onClick={async () => {
+                                    if (!confirm('Are you sure you want to PERMANENTLY delete ALL archived leads?')) return;
+                                    const { error } = await supabase.from('leads').delete().eq('is_archived', true);
+                                    if (error) alert('Error: ' + error.message);
+                                    else fetchLeads();
+                                }}
+                                style={{
+                                    width: 'auto',
+                                    padding: '8px 16px',
+                                    background: '#ff4444',
+                                    color: 'white',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                Empty Archive
+                            </button>
+                        )}
                     </div>
 
                     <div className="form-card" style={{ padding: '20px', overflowX: 'auto' }}>
