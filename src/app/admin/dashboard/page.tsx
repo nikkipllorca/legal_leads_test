@@ -39,6 +39,7 @@ export default function AdminDashboard() {
                     .single();
 
                 setRole(profile?.role || 'editor');
+                console.log('CURRENT LOGGED IN ROLE:', profile?.role);
                 fetchLeads();
             }
         };
@@ -164,7 +165,7 @@ export default function AdminDashboard() {
                                 Archived
                             </button>
                         </div>
-                        {showArchived && role === 'admin' && (
+                        {showArchived && (
                             <button
                                 onClick={async () => {
                                     if (filteredLeads.length === 0) return alert('Archive is already empty.');
@@ -233,14 +234,12 @@ export default function AdminDashboard() {
                                                     >
                                                         {lead.is_archived ? 'Unarchive' : 'Archive'}
                                                     </button>
-                                                    {role === 'admin' && (
-                                                        <button
-                                                            onClick={() => handleDelete(lead.id)}
-                                                            style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto', background: '#ff4444', color: 'white' }}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleDelete(lead.id)}
+                                                        style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto', background: '#ff4444', color: 'white' }}
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
