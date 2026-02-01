@@ -11,7 +11,32 @@ create table leads (
   estimated_damage numeric,
   injury_severity numeric,
   estimate_range text,
-  is_archived boolean default false
+  is_archived boolean default false,
+  media_urls text[] default '{}'
+);
+
+-- STORAGE BUCKET POLICIES --
+-- (Note: Ensure the bucket 'media_files' exists in your Supabase dashboard)
+-- Allow public to upload to the media_files bucket
+create policy "Public Upload"
+on storage.objects for insert
+with check (bucket_id = 'media_files');
+
+-- Allow authenticated users (admins/editors) to view files
+create policy "Authenticated View"
+on storage.objects for select
+using (bucket_id = 'media_files' and auth.role() = 'authenticated');
+
+-- Allow admins to delete files
+create policy "Admin Delete"
+on storage.objects for delete
+using (
+  bucket_id = 'media_files' and 
+  exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role = 'admin'
+  )
 );
 
 -- Set up RLS (Row Level Security)
