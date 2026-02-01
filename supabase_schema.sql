@@ -17,7 +17,7 @@ create table leads (
 alter table leads enable row level security;
 
 -- Allow anyone to insert (since it's a lead form)
-create policy "Allow public insert" on leads for insert with check (true);
+create policy "Allow public insert" on leads for insert with check (first_name is not null);
 
 -- Allow authenticated users to view leads
 create policy "Allow authenticated select" on leads for select using (auth.role() = 'authenticated');
@@ -45,7 +45,7 @@ begin
     and role = 'admin'
   );
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- Allow users to view their own profile
 create policy "Users can view own profile" on profiles for select using (
@@ -74,7 +74,7 @@ begin
   );
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- Cleanup existing trigger and recreation
 drop trigger if exists on_auth_user_created on auth.users;
