@@ -86,13 +86,23 @@ export default function AdminDashboard() {
         else fetchLeads();
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (lead: Lead) => {
         if (!confirm('Are you sure you want to PERMANENTLY delete this lead?')) return;
 
+        // 1. Delete associated files from storage
+        if (lead.media_urls && lead.media_urls.length > 0) {
+            const { error: storageError } = await supabase.storage
+                .from('media_files')
+                .remove(lead.media_urls);
+
+            if (storageError) console.error('Error deleting files:', storageError.message);
+        }
+
+        // 2. Delete the record from database
         const { error } = await supabase
             .from('leads')
             .delete()
-            .eq('id', id);
+            .eq('id', lead.id);
 
         if (error) alert('Error deleting lead: ' + error.message);
         else fetchLeads();
@@ -256,25 +266,45 @@ export default function AdminDashboard() {
                                             </td>
                                             <td style={{ padding: '12px' }}>
                                                 {lead.media_urls && lead.media_urls.length > 0 ? (
-                                                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                                                        {lead.media_urls.map((url, idx) => (
-                                                            <a
-                                                                key={idx}
-                                                                href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media_files/${url}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                style={{
-                                                                    fontSize: '0.7rem',
-                                                                    background: 'rgba(212, 175, 55, 0.2)',
-                                                                    color: 'var(--gold)',
-                                                                    padding: '2px 6px',
-                                                                    borderRadius: '4px',
-                                                                    textDecoration: 'none'
-                                                                }}
-                                                            >
-                                                                File {idx + 1}
-                                                            </a>
-                                                        ))}
+                                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                        {lead.media_urls.map((url, idx) => {
+                                                            const { data } = supabase.storage.from('media_files').getPublicUrl(url);
+                                                            const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                                                            return (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={data.publicUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    style={{ textDecoration: 'none' }}
+                                                                    title="Click to view full size"
+                                                                >
+                                                                    {isImage ? (
+                                                                        <img
+                                                                            src={data.publicUrl}
+                                                                            alt="Lead attachment"
+                                                                            style={{
+                                                                                width: '32px',
+                                                                                height: '32px',
+                                                                                objectFit: 'cover',
+                                                                                borderRadius: '4px',
+                                                                                border: '1px solid rgba(212, 175, 55, 0.3)'
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <span style={{
+                                                                            fontSize: '0.6rem',
+                                                                            background: 'rgba(212, 175, 55, 0.2)',
+                                                                            color: 'var(--gold)',
+                                                                            padding: '2px 6px',
+                                                                            borderRadius: '4px'
+                                                                        }}>
+                                                                            File {idx + 1}
+                                                                        </span>
+                                                                    )}
+                                                                </a>
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <span style={{ fontSize: '0.7rem', opacity: 0.3 }}>None</span>
@@ -289,7 +319,7 @@ export default function AdminDashboard() {
                                                         {lead.is_archived ? 'Unarchive' : 'Archive'}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(lead.id)}
+                                                        onClick={() => handleDelete(lead)}
                                                         style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto', background: '#ff4444', color: 'white' }}
                                                     >
                                                         Delete
