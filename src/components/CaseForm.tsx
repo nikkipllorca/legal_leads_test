@@ -17,6 +17,7 @@ export default function CaseForm() {
     });
     const [estimateRange, setEstimateRange] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [files, setFiles] = useState<FileList | null>(null);
 
     const calculateEstimate = () => {
         const econ = parseFloat(formData.hardCosts) || 0;
@@ -37,6 +38,26 @@ export default function CaseForm() {
         setIsSubmitting(true);
 
         try {
+            const media_urls: string[] = [];
+
+            // 1. Upload files first if any
+            if (files && files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Math.random()}.${fileExt}`;
+                    const filePath = `leads/${Date.now()}_${fileName}`;
+
+                    const { error: uploadError, data } = await supabase.storage
+                        .from('media_files')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+                    if (data) media_urls.push(data.path);
+                }
+            }
+
+            // 2. Insert lead with media_urls
             const { error } = await supabase.from('leads').insert([
                 {
                     first_name: formData.fname,
@@ -48,14 +69,15 @@ export default function CaseForm() {
                     estimated_damage: parseFloat(formData.hardCosts) || 0,
                     injury_severity: parseFloat(formData.severity),
                     estimate_range: estimateRange,
+                    media_urls: media_urls
                 },
             ]);
 
             if (error) throw error;
 
             alert('Estimate secured! A Tier-1 specialist will contact you shortly.');
-            // Reset form or redirect
             setStep(1);
+            setFiles(null);
             setFormData({
                 hardCosts: '',
                 severity: '1.5',
@@ -148,31 +170,50 @@ export default function CaseForm() {
                                 required
                             />
                         </div>
-                        <div className="input-group">
-                            <label>Phone Number</label>
-                            <input
-                                type="text"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                required
-                            />
+                        <div className="row">
+                            <div className="input-group" style={{ flex: 1 }}>
+                                <label>Phone Number</label>
+                                <input
+                                    type="text"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="input-group" style={{ flex: 1 }}>
+                                <label>City</label>
+                                <input
+                                    type="text"
+                                    value={formData.city}
+                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    required
+                                />
+                            </div>
                         </div>
+
                         <div className="input-group">
-                            <label>City of Accident</label>
+                            <label>Accident Photos / Documents (Optional)</label>
                             <input
-                                type="text"
-                                value={formData.city}
-                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                required
+                                type="file"
+                                multiple
+                                accept="image/*,.pdf"
+                                onChange={(e) => setFiles(e.target.files)}
+                                style={{ padding: '8px', fontSize: '0.8rem' }}
                             />
+                            {files && files.length > 0 && (
+                                <p style={{ fontSize: '0.75rem', color: 'var(--gold)', marginTop: '5px' }}>
+                                    {files.length} file(s) selected
+                                </p>
+                            )}
                         </div>
+
                         <button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Submitting...' : 'Submit Case For Review'}
+                            {isSubmitting ? 'Uploading & Submitting...' : 'Submit Case For Review'}
                         </button>
                         <button
                             type="button"
                             onClick={() => setStep(1)}
-                            style={{ background: 'transparent', color: 'var(--gold)', marginTop: '10px', padding: '8px' }}
+                            style={{ background: 'transparent', color: 'var(--gold)', marginTop: '10px', padding: '8px', fontSize: '0.85rem' }}
                         >
                             Back to Calculator
                         </button>

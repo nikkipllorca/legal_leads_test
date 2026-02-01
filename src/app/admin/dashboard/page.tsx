@@ -16,6 +16,7 @@ interface Lead {
     is_commercial: boolean;
     estimate_range: string;
     is_archived: boolean;
+    media_urls?: string[];
 }
 
 export default function AdminDashboard() {
@@ -67,8 +68,8 @@ export default function AdminDashboard() {
     };
 
     const sortedLeads = [...leads].sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
+        const aValue = a[sortConfig.key] ?? '';
+        const bValue = b[sortConfig.key] ?? '';
 
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -224,6 +225,7 @@ export default function AdminDashboard() {
                                     <th onClick={() => handleSort('estimate_range')} style={{ padding: '12px', cursor: 'pointer' }}>
                                         Estimate {sortConfig.key === 'estimate_range' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                                     </th>
+                                    <th style={{ padding: '12px' }}>Media</th>
                                     <th style={{ padding: '12px' }}>Actions</th>
                                 </tr>
                             </thead>
@@ -251,6 +253,32 @@ export default function AdminDashboard() {
                                             <td style={{ padding: '12px' }}>{lead.city}</td>
                                             <td style={{ padding: '12px', fontWeight: 'bold', color: 'var(--gold)' }}>
                                                 {lead.estimate_range}
+                                            </td>
+                                            <td style={{ padding: '12px' }}>
+                                                {lead.media_urls && lead.media_urls.length > 0 ? (
+                                                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                                        {lead.media_urls.map((url, idx) => (
+                                                            <a
+                                                                key={idx}
+                                                                href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media_files/${url}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{
+                                                                    fontSize: '0.7rem',
+                                                                    background: 'rgba(212, 175, 55, 0.2)',
+                                                                    color: 'var(--gold)',
+                                                                    padding: '2px 6px',
+                                                                    borderRadius: '4px',
+                                                                    textDecoration: 'none'
+                                                                }}
+                                                            >
+                                                                File {idx + 1}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ fontSize: '0.7rem', opacity: 0.3 }}>None</span>
+                                                )}
                                             </td>
                                             <td style={{ padding: '12px' }}>
                                                 <div style={{ display: 'flex', gap: '22px' }}>
