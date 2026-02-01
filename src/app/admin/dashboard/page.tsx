@@ -15,6 +15,7 @@ interface Lead {
     city: string;
     is_commercial: boolean;
     estimate_range: string;
+    is_archived: boolean;
 }
 
 export default function AdminDashboard() {
@@ -22,28 +23,20 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [role, setRole] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'leads' | 'users'>('leads');
+    const [showArchived, setShowArchived] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
         const checkUser = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            console.log('Session user:', session?.user?.email);
             if (!session) {
                 router.push('/admin/login');
             } else {
-                // Fetch profile to check role
-                const { data: profile, error: profileError } = await supabase
+                const { data: profile } = await supabase
                     .from('profiles')
                     .select('role')
                     .eq('id', session.user.id)
                     .single();
-
-                if (profileError) {
-                    console.error('Profile fetch error details:', JSON.stringify(profileError, null, 2));
-                    console.error('Raw error object:', profileError);
-                }
-                console.log('Fetched profile data:', profile);
-                console.log('Fetched profile role:', profile?.role);
 
                 setRole(profile?.role || 'editor');
                 fetchLeads();
@@ -58,12 +51,31 @@ export default function AdminDashboard() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching leads:', error.message);
-        } else {
-            setLeads(data || []);
-        }
+        if (error) console.error('Error fetching leads:', error.message);
+        else setLeads(data || []);
         setLoading(false);
+    };
+
+    const handleArchive = async (id: string, currentStatus: boolean) => {
+        const { error } = await supabase
+            .from('leads')
+            .update({ is_archived: !currentStatus })
+            .eq('id', id);
+
+        if (error) alert('Error updating lead: ' + error.message);
+        else fetchLeads();
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to PERMANENTLY delete this lead?')) return;
+
+        const { error } = await supabase
+            .from('leads')
+            .delete()
+            .eq('id', id);
+
+        if (error) alert('Error deleting lead: ' + error.message);
+        else fetchLeads();
     };
 
     const handleLogout = async () => {
@@ -78,6 +90,8 @@ export default function AdminDashboard() {
             </div>
         );
     }
+
+    const filteredLeads = leads.filter(lead => lead.is_archived === showArchived);
 
     return (
         <main className="main-wrapper" style={{ flexDirection: 'column', gap: '20px' }}>
@@ -124,52 +138,98 @@ export default function AdminDashboard() {
             </div>
 
             {activeTab === 'leads' ? (
-                <div className="form-card" style={{ padding: '20px', overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
-                                <th style={{ padding: '12px' }}>Date</th>
-                                <th style={{ padding: '12px' }}>Name</th>
-                                <th style={{ padding: '12px' }}>Contact</th>
-                                <th style={{ padding: '12px' }}>Location</th>
-                                <th style={{ padding: '12px' }}>18-Wheeler</th>
-                                <th style={{ padding: '12px' }}>Estimate</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {leads.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} style={{ padding: '20px', textAlign: 'center', opacity: 0.5 }}>No leads found yet.</td>
+                <>
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px' }}>
+                        <button
+                            onClick={() => setShowArchived(false)}
+                            style={{
+                                width: 'auto',
+                                padding: '8px 16px',
+                                background: !showArchived ? 'var(--gold)' : 'rgba(255,255,255,0.1)',
+                                color: !showArchived ? 'black' : 'white'
+                            }}
+                        >
+                            Active Leads
+                        </button>
+                        <button
+                            onClick={() => setShowArchived(true)}
+                            style={{
+                                width: 'auto',
+                                padding: '8px 16px',
+                                background: showArchived ? 'var(--gold)' : 'rgba(255,255,255,0.1)',
+                                color: showArchived ? 'black' : 'white'
+                            }}
+                        >
+                            Archived
+                        </button>
+                    </div>
+
+                    <div className="form-card" style={{ padding: '20px', overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                    <th style={{ padding: '12px' }}>Date</th>
+                                    <th style={{ padding: '12px' }}>Name</th>
+                                    <th style={{ padding: '12px' }}>Contact</th>
+                                    <th style={{ padding: '12px' }}>Location</th>
+                                    <th style={{ padding: '12px' }}>Estimate</th>
+                                    <th style={{ padding: '12px' }}>Actions</th>
                                 </tr>
-                            ) : (
-                                leads.map((lead) => (
-                                    <tr key={lead.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '12px', fontSize: '0.85rem' }}>
-                                            {new Date(lead.created_at).toLocaleDateString()}
-                                        </td>
-                                        <td style={{ padding: '12px' }}>
-                                            {lead.first_name} {lead.last_name}
-                                        </td>
-                                        <td style={{ padding: '12px', fontSize: '0.85rem' }}>
-                                            {lead.email}<br />
-                                            <span style={{ color: 'var(--gold)' }}>{lead.phone}</span>
-                                        </td>
-                                        <td style={{ padding: '12px' }}>{lead.city}</td>
-                                        <td style={{ padding: '12px' }}>
-                                            {lead.is_commercial ? '✅ Yes' : '❌ No'}
-                                        </td>
-                                        <td style={{ padding: '12px', fontWeight: 'bold', color: 'var(--gold)' }}>
-                                            {lead.estimate_range}
+                            </thead>
+                            <tbody>
+                                {filteredLeads.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} style={{ padding: '20px', textAlign: 'center', opacity: 0.5 }}>
+                                            No {showArchived ? 'archived' : 'active'} leads found.
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                ) : (
+                                    filteredLeads.map((lead) => (
+                                        <tr key={lead.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <td style={{ padding: '12px', fontSize: '0.85rem' }}>
+                                                {new Date(lead.created_at).toLocaleDateString()}
+                                            </td>
+                                            <td style={{ padding: '12px' }}>
+                                                {lead.first_name} {lead.last_name}
+                                                {lead.is_commercial && <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--gold)' }}>🚛 18-Wheeler</span>}
+                                            </td>
+                                            <td style={{ padding: '12px', fontSize: '0.85rem' }}>
+                                                {lead.email}<br />
+                                                <span style={{ color: 'var(--gold)' }}>{lead.phone}</span>
+                                            </td>
+                                            <td style={{ padding: '12px' }}>{lead.city}</td>
+                                            <td style={{ padding: '12px', fontWeight: 'bold', color: 'var(--gold)' }}>
+                                                {lead.estimate_range}
+                                            </td>
+                                            <td style={{ padding: '12px' }}>
+                                                <div style={{ display: 'flex', gap: '5px' }}>
+                                                    <button
+                                                        onClick={() => handleArchive(lead.id, lead.is_archived)}
+                                                        style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto' }}
+                                                    >
+                                                        {lead.is_archived ? 'Unarchive' : 'Archive'}
+                                                    </button>
+                                                    {role === 'admin' && (
+                                                        <button
+                                                            onClick={() => handleDelete(lead.id)}
+                                                            style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto', background: '#ff4444', color: 'white' }}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             ) : (
                 <UserManagement />
             )}
         </main>
     );
 }
+

@@ -10,7 +10,8 @@ create table leads (
   is_commercial boolean,
   estimated_damage numeric,
   injury_severity numeric,
-  estimate_range text
+  estimate_range text,
+  is_archived boolean default false
 );
 
 -- Set up RLS (Row Level Security)
@@ -21,6 +22,18 @@ create policy "Allow public insert" on leads for insert with check (first_name i
 
 -- Allow authenticated users to view leads
 create policy "Allow authenticated select" on leads for select using (auth.role() = 'authenticated');
+
+-- Allow authenticated users to archive leads (update is_archived)
+create policy "Allow authenticated update leads" on leads for update using (auth.role() = 'authenticated');
+
+-- Allow admins to delete leads
+create policy "Allow admins to delete leads" on leads for delete using (
+  exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role = 'admin'
+  )
+);
 
 -- USER MANAGEMENT --
 
