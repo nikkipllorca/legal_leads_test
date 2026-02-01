@@ -65,38 +65,38 @@ export default function UserManagement() {
 
             <div className="form-card" style={{ padding: '20px', marginBottom: '20px' }}>
                 <h3>Add New User</h3>
-                <form onSubmit={handleCreateUser} style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                    <div className="input-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
+                <form onSubmit={handleCreateUser} style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
                         <input
                             type="email"
                             placeholder="Email"
                             value={newUser.email}
                             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                             required
-                            style={{ marginBottom: 0 }}
+                            style={{ marginBottom: 0, height: '45px' }}
                         />
                     </div>
-                    <div className="input-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
                         <input
                             type="password"
                             placeholder="Password"
                             value={newUser.password}
                             onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                             required
-                            style={{ marginBottom: 0 }}
+                            style={{ marginBottom: 0, height: '45px' }}
                         />
                     </div>
-                    <div className="input-group" style={{ minWidth: '120px', margin: 0 }}>
+                    <div style={{ minWidth: '120px' }}>
                         <select
                             value={newUser.role}
                             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                            style={{ marginBottom: 0 }}
+                            style={{ marginBottom: 0, height: '45px' }}
                         >
                             <option value="editor">Editor</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <button type="submit" disabled={isAdding} style={{ padding: '0 24px', height: '48px', width: 'auto', alignSelf: 'center' }}>
+                    <button type="submit" disabled={isAdding} style={{ padding: '0 24px', height: '45px', width: 'auto' }}>
                         {isAdding ? 'Adding...' : 'Add User'}
                     </button>
                 </form>

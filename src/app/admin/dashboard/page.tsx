@@ -24,6 +24,7 @@ export default function AdminDashboard() {
     const [role, setRole] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'leads' | 'users'>('leads');
     const [showArchived, setShowArchived] = useState(false);
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Lead; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
     const router = useRouter();
 
     useEffect(() => {
@@ -56,6 +57,23 @@ export default function AdminDashboard() {
         else setLeads(data || []);
         setLoading(false);
     };
+
+    const handleSort = (key: keyof Lead) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedLeads = [...leads].sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
 
     const handleArchive = async (id: string, currentStatus: boolean) => {
         const { error } = await supabase
@@ -92,7 +110,7 @@ export default function AdminDashboard() {
         );
     }
 
-    const filteredLeads = leads.filter(lead => lead.is_archived === showArchived);
+    const filteredLeads = sortedLeads.filter(lead => lead.is_archived === showArchived);
 
     return (
         <main className="main-wrapper" style={{ flexDirection: 'column', gap: '20px' }}>
@@ -191,11 +209,21 @@ export default function AdminDashboard() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
-                                    <th style={{ padding: '12px' }}>Date</th>
-                                    <th style={{ padding: '12px' }}>Name</th>
-                                    <th style={{ padding: '12px' }}>Contact</th>
-                                    <th style={{ padding: '12px' }}>Location</th>
-                                    <th style={{ padding: '12px' }}>Estimate</th>
+                                    <th onClick={() => handleSort('created_at')} style={{ padding: '12px', cursor: 'pointer' }}>
+                                        Date {sortConfig.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th onClick={() => handleSort('first_name')} style={{ padding: '12px', cursor: 'pointer' }}>
+                                        Name {sortConfig.key === 'first_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th onClick={() => handleSort('email')} style={{ padding: '12px', cursor: 'pointer' }}>
+                                        Contact {sortConfig.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th onClick={() => handleSort('city')} style={{ padding: '12px', cursor: 'pointer' }}>
+                                        Location {sortConfig.key === 'city' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th onClick={() => handleSort('estimate_range')} style={{ padding: '12px', cursor: 'pointer' }}>
+                                        Estimate {sortConfig.key === 'estimate_range' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th style={{ padding: '12px' }}>Actions</th>
                                 </tr>
                             </thead>
@@ -225,7 +253,7 @@ export default function AdminDashboard() {
                                                 {lead.estimate_range}
                                             </td>
                                             <td style={{ padding: '12px' }}>
-                                                <div style={{ display: 'flex', gap: '12px' }}>
+                                                <div style={{ display: 'flex', gap: '22px' }}>
                                                     <button
                                                         onClick={() => handleArchive(lead.id, lead.is_archived)}
                                                         style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto' }}
