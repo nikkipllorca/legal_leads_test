@@ -164,9 +164,10 @@ export default function AdminDashboard() {
                                 Archived
                             </button>
                         </div>
-                        {showArchived && role === 'admin' && filteredLeads.length > 0 && (
+                        {showArchived && role === 'admin' && (
                             <button
                                 onClick={async () => {
+                                    if (filteredLeads.length === 0) return alert('Archive is already empty.');
                                     if (!confirm('Are you sure you want to PERMANENTLY delete ALL archived leads?')) return;
                                     const { error } = await supabase.from('leads').delete().eq('is_archived', true);
                                     if (error) alert('Error: ' + error.message);
@@ -175,10 +176,12 @@ export default function AdminDashboard() {
                                 style={{
                                     width: 'auto',
                                     padding: '8px 16px',
-                                    background: '#ff4444',
-                                    color: 'white',
-                                    fontSize: '0.8rem'
+                                    background: filteredLeads.length > 0 ? '#ff4444' : 'rgba(255,255,255,0.05)',
+                                    color: filteredLeads.length > 0 ? 'white' : 'rgba(255,255,255,0.3)',
+                                    fontSize: '0.8rem',
+                                    cursor: filteredLeads.length > 0 ? 'pointer' : 'not-allowed'
                                 }}
+                                disabled={filteredLeads.length === 0}
                             >
                                 Empty Archive
                             </button>
