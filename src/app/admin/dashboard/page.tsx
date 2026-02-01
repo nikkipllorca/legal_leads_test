@@ -120,22 +120,20 @@ export default function AdminDashboard() {
                 >
                     Leads
                 </button>
-                {role === 'admin' && (
-                    <button
-                        onClick={() => setActiveTab('users')}
-                        style={{
-                            background: 'none',
-                            color: activeTab === 'users' ? 'var(--gold)' : 'white',
-                            borderBottom: activeTab === 'users' ? '2px solid var(--gold)' : 'none',
-                            padding: '10px',
-                            borderRadius: '0',
-                            width: 'auto',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        User Management
-                    </button>
-                )}
+                <button
+                    onClick={() => setActiveTab('users')}
+                    style={{
+                        background: 'none',
+                        color: activeTab === 'users' ? 'var(--gold)' : 'white',
+                        borderBottom: activeTab === 'users' ? '2px solid var(--gold)' : 'none',
+                        padding: '10px',
+                        borderRadius: '0',
+                        width: 'auto',
+                        cursor: 'pointer'
+                    }}
+                >
+                    User Management
+                </button>
             </div>
 
             {activeTab === 'leads' ? (
