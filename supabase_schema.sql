@@ -34,14 +34,32 @@ create table profiles (
 -- Enable RLS on profiles
 alter table profiles enable row level security;
 
--- Admin can view all profiles
-create policy "Admins can view all profiles" on profiles for select using (
-  exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+-- Function to check if a user is an admin without recursion
+-- Using 'security definer' bypasses RLS for the duration of the function
+create or replace function is_admin()
+returns boolean as $$
+begin
+  return exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role = 'admin'
+  );
+end;
+$$ language plpgsql security definer;
+
+-- Allow users to view their own profile
+create policy "Users can view own profile" on profiles for select using (
+  auth.uid() = id
 );
 
--- Admin can update profiles
+-- Admins can view all profiles
+create policy "Admins can view all profiles" on profiles for select using (
+  is_admin()
+);
+
+-- Admins can update profiles
 create policy "Admins can update profiles" on profiles for update using (
-  exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+  is_admin()
 );
 
 -- Create a trigger to create a profile on signup
@@ -49,11 +67,18 @@ create or replace function public.handle_new_user()
 returns trigger as $$
 begin
   insert into public.profiles (id, email, role)
-  values (new.id, new.email, 'admin'); -- Defaulting first users to admin for now, or you can change to 'editor'
+  values (
+    new.id, 
+    new.email, 
+    coalesce(new.raw_user_meta_data->>'role', 'editor')
+  );
   return new;
 end;
 $$ language plpgsql security definer;
 
+-- Cleanup existing trigger and recreation
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+

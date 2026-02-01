@@ -41,6 +41,11 @@ export default function Home() {
         <div className="footer-content">
           <p>&copy; 2026 TEXAS JUSTICE HUB (TJH). ALL RIGHTS RESERVED.</p>
           <p>ATTORNEY ADVERTISING | CONFIDENTIAL | FREE EVALUATION | NO WIN NO FEE</p>
+          <p style={{ marginTop: '10px' }}>
+            <a href="/admin" style={{ color: 'var(--gold)', textDecoration: 'none', borderBottom: '1px solid var(--gold)', paddingBottom: '2px', fontSize: '0.8rem' }}>
+              STAFF PORTAL
+            </a>
+          </p>
         </div>
       </footer>
     </main>
