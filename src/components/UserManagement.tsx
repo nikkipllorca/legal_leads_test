@@ -65,35 +65,38 @@ export default function UserManagement() {
 
             <div className="form-card" style={{ padding: '20px', marginBottom: '20px' }}>
                 <h3>Add New User</h3>
-                <form onSubmit={handleCreateUser} style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-                    <div className="input-group" style={{ flex: 1, minWidth: '200px' }}>
+                <form onSubmit={handleCreateUser} style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                    <div className="input-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
                         <input
                             type="email"
                             placeholder="Email"
                             value={newUser.email}
                             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                             required
+                            style={{ marginBottom: 0 }}
                         />
                     </div>
-                    <div className="input-group" style={{ flex: 1, minWidth: '200px' }}>
+                    <div className="input-group" style={{ flex: 1, minWidth: '200px', margin: 0 }}>
                         <input
                             type="password"
                             placeholder="Password"
                             value={newUser.password}
                             onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                             required
+                            style={{ marginBottom: 0 }}
                         />
                     </div>
-                    <div className="input-group" style={{ minWidth: '120px' }}>
+                    <div className="input-group" style={{ minWidth: '120px', margin: 0 }}>
                         <select
                             value={newUser.role}
                             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                            style={{ marginBottom: 0 }}
                         >
                             <option value="editor">Editor</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <button type="submit" disabled={isAdding} style={{ padding: '12px 24px', width: 'auto' }}>
+                    <button type="submit" disabled={isAdding} style={{ padding: '0 24px', height: '48px', width: 'auto', alignSelf: 'center' }}>
                         {isAdding ? 'Adding...' : 'Add User'}
                     </button>
                 </form>
@@ -130,8 +133,8 @@ export default function UserManagement() {
                                         onChange={(e) => handleUpdateRole(p.id, e.target.value)}
                                         style={{ padding: '4px', fontSize: '0.8rem', width: 'auto' }}
                                     >
-                                        <option value="editor">Make Editor</option>
-                                        <option value="admin">Make Admin</option>
+                                        <option value="editor">Editor</option>
+                                        <option value="admin">Admin</option>
                                     </select>
                                 </td>
                             </tr>

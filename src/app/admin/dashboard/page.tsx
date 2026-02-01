@@ -225,7 +225,7 @@ export default function AdminDashboard() {
                                                 {lead.estimate_range}
                                             </td>
                                             <td style={{ padding: '12px' }}>
-                                                <div style={{ display: 'flex', gap: '5px' }}>
+                                                <div style={{ display: 'flex', gap: '12px' }}>
                                                     <button
                                                         onClick={() => handleArchive(lead.id, lead.is_archived)}
                                                         style={{ padding: '5px 10px', fontSize: '0.75rem', width: 'auto' }}
