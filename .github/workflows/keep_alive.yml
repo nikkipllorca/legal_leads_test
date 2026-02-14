@@ -1,0 +1,16 @@
+name: Supabase Heartbeat
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Runs at 00:00 every Sunday
+  workflow_dispatch: # Allows you to run it manually to test
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Heartbeat Request
+        run: |
+          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
